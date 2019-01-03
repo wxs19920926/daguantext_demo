@@ -30,7 +30,7 @@ def load_files(files = None):
 #        file_datas = f.readlines()
         if fid == 0:
             file_datas = f.readlines()
-            for file_data in file_datas[1:5]:
+            for file_data in file_datas[1:]:
                 texts_train = list()
                 text = file_data.split(',')
 #                texts_train.append(text[0].strip())
@@ -111,6 +111,35 @@ def dataset_split(texts, labels, random_seed=None):
 
     return val_x, val_y, test_x, test_y
 
+def dataset_split_train(texts, labels, train_percent, random_seed=None):
+    """
+    训练、开发、测试集划分，其中训练集比例为train_percent，开发集和测试各集为0.5(1-train_percent)
+    :param text: 数据集x
+    :param labels: 数据集标记
+    :param train_percent: 训练集所占比例
+    :return: (train_x, train_y, val_x, val_y, test_x, test_y)
+    """
+    logger.info("split dataset ...")
+    # 检测x与y长度是否相等
+    assert len(texts) == len(labels)
+    # 随机化数据
+    if random_seed:
+        np.random.seed(random_seed)
+    shuf_idx = np.random.permutation(len(texts))
+    texts_shuf = np.array(texts)[shuf_idx]
+    labels_shuf = np.array(labels)[shuf_idx]
+
+    # 切分数据
+    split_idx = int(len(texts_shuf)*train_percent)
+    train_x, val_x = texts_shuf[:split_idx], texts_shuf[split_idx:]
+    train_y, val_y = labels_shuf[:split_idx], labels_shuf[split_idx:]
+
+    test_idx = int(len(val_x)*0.5)
+    val_x, test_x = val_x[:test_idx], val_x[test_idx:]
+    val_y, test_y = val_y[:test_idx], val_y[test_idx:]
+
+    return train_x, train_y, val_x, val_y, test_x, test_y
+
 #统计类别
 def countclass_num(labels : list):
     class_counts = Counter(labels)
@@ -134,16 +163,25 @@ def labels2onehot(labels, class_num):
 def main():
     texts_trains, texts_tests = load_files([parent_path + '/data/origin/train_set.csv', parent_path + '/data/origin/test_set.csv'])
     texts, labels = build_dataset(texts_trains, 1)
-    texts_test, labels_test = build_dataset(texts_tests, 1)
+    
+#======test_data======#
+#    texts_test, labels_test = build_dataset(texts_tests, 1)
     texts, labels = drop_empty_texts(texts, labels)
-    texts_test, labels_test = drop_empty_texts(texts_test, labels_test)
+    
+#======test_data======#
+#    texts_test, labels_test = drop_empty_texts(texts_test, labels_test)
     texts = dataset_padding(texts, config.max_sent_len)
-    texts_test = dataset_padding(texts_test, config.max_sent_len)
+    
+#======test_data======#
+#    texts_test = dataset_padding(texts_test, config.max_sent_len)
     class_num = countclass_num(labels)
     labels = labels2onehot(labels,class_num)
-    train_x = texts
-    train_y = labels
-    val_x, val_y, test_x, test_y = dataset_split(texts_test, labels_test)
+    
+#======test_data======#
+#    train_x = texts
+#    train_y = labels
+#    val_x, val_y, test_x, test_y = dataset_split(texts_test, labels_test)
+    train_x, train_y, val_x, val_y, test_x, test_y = dataset_split_train(texts, labels)
     return train_x, train_y, val_x, val_y, test_x, test_y
     
     
