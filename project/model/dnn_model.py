@@ -6,9 +6,9 @@ Created on Wed Jan  2 14:34:56 2019
 """
 
 import tensorflow as tf
-import data_tools as dt
 import numpy as np
 import logging
+from ..train import dataset
 logger = logging.getLogger('main.dnn_model')
 
 class DNNModel():
@@ -94,6 +94,30 @@ class DNNModel():
             outputs = tf.contrib.layers.fully_connected(inputs, self.class_num, activation_fn=None)
         return outputs
     
+    def set_loss(self):
+        """
+        损失函数
+        """
+        # softmax交叉熵损失
+        with tf.name_scope("loss_scope"):
+            reg_loss = tf.contrib.layers.apply_regularization(  # L2正则化
+                tf.contrib.layers.l2_regularizer(self.l2reg),
+                tf.trainable_variables()
+            )
+            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(
+                logits=self.predictions, labels=self.labels)) + reg_loss   # ---GLOBAL---损失函数
+            tf.summary.scalar("loss_summary", self.loss)
+
+    def set_accuracy(self):
+        """
+        准确率
+        """
+        with tf.name_scope("accuracy_scope"):
+            correct_pred = tf.equal(tf.argmax(self.predictions, 1), tf.argmax(self.labels, 1))
+            # correct_pred = tf.equal(tf.cast(tf.round(self.predictions), tf.int32), self.labels)
+            self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))   # ---GLOBAL---准确率
+            self.acc_summary = tf.summary.scalar("acc_summary", self.accuracy)
+    
     def build(self):
         """
         DNN模型构建
@@ -107,7 +131,7 @@ class DNNModel():
         self.set_loss()
         self.set_accuracy()
         
-     def set_optimizer(self, learning_rate, global_step):
+    def set_optimizer(self, learning_rate, global_step):
         """
         优化器
         """
@@ -144,7 +168,7 @@ class DNNModel():
 
                 train_acc = []
                 dev_acc_epoch = []
-                for id_, (x, y) in enumerate(dt.make_batches(train_x, train_y, self.batch_size), 1):
+                for id_, (x, y) in enumerate(dataset.make_batches(train_x, train_y, self.batch_size), 1):
                     step += 1
                     feed = {
                         self.inputs: x,
@@ -159,6 +183,7 @@ class DNNModel():
                         run_metadata=run_metadata  # for meta 日志
                     )
                     train_acc.append(batch_acc)
+                    print("epochs:%s,batches:%s,loss_:%s,batch_acc:%s"%(e, id_, loss_, batch_acc))
 
                     # # ------写入meta日志，若打开日志文件会特别巨大
                     # train_log_writer.add_run_metadata(run_metadata, 'batch%03d' % step)
@@ -168,7 +193,7 @@ class DNNModel():
                     if id_ % show_step == 0:
                         dev_acc = []
                         dev_state = sess.run(self.rnn_cell.zero_state(self.batch_size, tf.float32))
-                        for xx, yy in dt.make_batches(dev_x, dev_y, self.batch_size):
+                        for xx, yy in dataset.make_batches(dev_x, dev_y, self.batch_size):
                             feed = {
                                 self.inputs: xx,
                                 self.labels: yy,
@@ -182,6 +207,7 @@ class DNNModel():
                             dev_acc.append(dev_batch_acc)
                             dev_acc_epoch.append(dev_batch_acc)
                             dev_log_writer.add_summary(dev_acc_summary, step)
+                            print("show_step:%s,dev_batch_acc:%s"%(id_/show_step ,dev_batch_acc))
 
                         info = "|Epoch {}/{}\t".format(e+1, epochs) + \
                             "|Batch {}/{}\t".format(id_+1, n_batches) + \
@@ -219,7 +245,7 @@ class DNNModel():
 #            saver.restore(sess, tf.train.latest_checkpoint(model_dir))
             saver.restore(sess, "./checkpoints/best/best_model.ckpt")
             test_state = sess.run(model.rnn_cell.zero_state(batch_size, tf.float32))
-            for _, (x, y) in enumerate(dt.make_batches(test_x, test_y, batch_size), 1):
+            for _, (x, y) in enumerate(dataset.make_batches(test_x, test_y, batch_size), 1):
                 feed = {model.inputs: x,
                         model.labels: y,
                         model.keep_prob: 1,

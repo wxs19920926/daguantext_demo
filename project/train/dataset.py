@@ -30,7 +30,7 @@ def load_files(files = None):
 #        file_datas = f.readlines()
         if fid == 0:
             file_datas = f.readlines()
-            for file_data in file_datas[1:]:
+            for file_data in file_datas[1:10]:
                 texts_train = list()
                 text = file_data.split(',')
 #                texts_train.append(text[0].strip())
@@ -54,6 +54,7 @@ def build_dataset(texts_dataset : list, index : int):
     texts_dataset = np.array(texts_dataset)
     texts = texts_dataset[:, index]
     labels = texts_dataset[:, 2]
+    labels = list(map(lambda label : int(label), labels))
     return texts, labels
 
 #去除空的数据集
@@ -144,7 +145,8 @@ def dataset_split_train(texts, labels, train_percent, random_seed=None):
 def countclass_num(labels : list):
     class_counts = Counter(labels)
     class_num = sorted(class_counts, key=class_counts.get, reverse=True)
-    return len(class_num)
+    class_num = sorted(class_num, reverse=True)
+    return int(class_num[0]+1)
 
 def labels2onehot(labels, class_num):
     """
@@ -158,9 +160,36 @@ def labels2onehot(labels, class_num):
         onehot_label[label_] = 1
         return onehot_label
     return np.array([label2onehot(label_, class_num) for label_ in labels])
+
+def make_batches(x, y, batch_size=100):
+    """
+    将数据划分成训练批次
+    :param x: 训练数据
+    :param y: 训练数所标记
+    :param batch_size: int, 批次大小
+    :return: x和y的批次数据生成器
+    """
+    n_batches = len(x)//batch_size
+    x, y = x[:n_batches*batch_size], y[:n_batches*batch_size]
+    for id_ in range(0, len(x), batch_size):
+        yield x[id_:id_+batch_size], y[id_:id_+batch_size]
+        
+def make_dictionary_by_text(words_list, maxword):
+    
+#    word_counts = clear_account(words_list)
+    words2 = list()
+    for words in words_list:
+        words1 = list()
+        for word in words:
+            if int(word) < maxword:
+                words1.append(word)
+            else:
+                words1.append(0)
+        words2.append(words1)
+    return words2
     
 
-def main():
+def main(train_percent):
     texts_trains, texts_tests = load_files([parent_path + '/data/origin/train_set.csv', parent_path + '/data/origin/test_set.csv'])
     texts, labels = build_dataset(texts_trains, 1)
     
@@ -171,9 +200,11 @@ def main():
 #======test_data======#
 #    texts_test, labels_test = drop_empty_texts(texts_test, labels_test)
     texts = dataset_padding(texts, config.max_sent_len)
+    texts = make_dictionary_by_text(texts, config.max_words)
     
 #======test_data======#
 #    texts_test = dataset_padding(texts_test, config.max_sent_len)
+    
     class_num = countclass_num(labels)
     labels = labels2onehot(labels,class_num)
     
@@ -181,8 +212,8 @@ def main():
 #    train_x = texts
 #    train_y = labels
 #    val_x, val_y, test_x, test_y = dataset_split(texts_test, labels_test)
-    train_x, train_y, val_x, val_y, test_x, test_y = dataset_split_train(texts, labels)
-    return train_x, train_y, val_x, val_y, test_x, test_y
+    train_x, train_y, val_x, val_y, test_x, test_y = dataset_split_train(texts, labels, train_percent)
+    return train_x, train_y, val_x, val_y, test_x, test_y, class_num
     
     
 if __name__ == '__main__':
