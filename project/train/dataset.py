@@ -30,7 +30,7 @@ def load_files(files = None):
 #        file_datas = f.readlines()
         if fid == 0:
             file_datas = f.readlines()
-            for file_data in file_datas[1:10]:
+            for file_data in file_datas[1:]:
                 texts_train = list()
                 text = file_data.split(',')
 #                texts_train.append(text[0].strip())
@@ -189,9 +189,9 @@ def make_dictionary_by_text(words_list, maxword):
     return words2
     
 
-def main(train_percent):
+def main(mode, train_percent):
     texts_trains, texts_tests = load_files([parent_path + '/data/origin/train_set.csv', parent_path + '/data/origin/test_set.csv'])
-    texts, labels = build_dataset(texts_trains, 1)
+    texts, labels = build_dataset(texts_trains, mode)
     
 #======test_data======#
 #    texts_test, labels_test = build_dataset(texts_tests, 1)

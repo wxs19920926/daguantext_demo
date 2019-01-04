@@ -155,10 +155,10 @@ class DNNModel():
         merged_summary = tf.summary.merge_all()
 
         with tf.Session() as sess:
-            train_log_writer = tf.summary.FileWriter("./log", sess.graph)
-            dev_log_writer = tf.summary.FileWriter("./log/dev")
-            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)  # for meta日志
-            run_metadata = tf.RunMetadata()  # for meta日志
+#            train_log_writer = tf.summary.FileWriter("./log", sess.graph)
+#            dev_log_writer = tf.summary.FileWriter("./log/dev")
+#            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)  # for meta日志
+#            run_metadata = tf.RunMetadata()  # for meta日志
 
             sess.run(tf.global_variables_initializer())
             n_batches = len(train_x)//self.batch_size
@@ -178,16 +178,14 @@ class DNNModel():
                     }
                     loss_, _, _, _, batch_acc, train_summary = sess.run(
                         [self.loss, self.rnn_final_state, self.optimizer, learn_rate_decay, self.accuracy, merged_summary],
-                        feed_dict=feed,
-                        options=run_options,       # for meta 日志
-                        run_metadata=run_metadata  # for meta 日志
+                        feed_dict=feed
                     )
                     train_acc.append(batch_acc)
                     print("epochs:%s,batches:%s,loss_:%s,batch_acc:%s"%(e, id_, loss_, batch_acc))
 
                     # # ------写入meta日志，若打开日志文件会特别巨大
                     # train_log_writer.add_run_metadata(run_metadata, 'batch%03d' % step)
-                    train_log_writer.add_summary(train_summary, step)  # 写入日志
+#                    train_log_writer.add_summary(train_summary, step)  # 写入日志
 
                     # 验证 ------------
                     if id_ % show_step == 0:
@@ -206,7 +204,7 @@ class DNNModel():
                             )
                             dev_acc.append(dev_batch_acc)
                             dev_acc_epoch.append(dev_batch_acc)
-                            dev_log_writer.add_summary(dev_acc_summary, step)
+#                            dev_log_writer.add_summary(dev_acc_summary, step)
                             print("show_step:%s,dev_batch_acc:%s"%(id_/show_step ,dev_batch_acc))
 
                         info = "|Epoch {}/{}\t".format(e+1, epochs) + \
