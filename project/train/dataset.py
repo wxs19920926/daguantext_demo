@@ -30,7 +30,7 @@ def load_files(files = None):
 #        file_datas = f.readlines()
         if fid == 0:
             file_datas = f.readlines()
-            for file_data in file_datas[1:]:
+            for file_data in file_datas[1:4]:
                 texts_train = list()
                 text = file_data.split(',')
 #                texts_train.append(text[0].strip())

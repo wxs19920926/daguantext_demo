@@ -7,7 +7,7 @@ Created on Wed Jan  2 14:21:15 2019
 from project.train import dataset
 from project.model import dnn_model
 from project import config
-import argparse
+#import argparse
 
 # ================== step0: 定义超参数 =================
 learning_rate = 0.05     # 学习率
@@ -29,10 +29,11 @@ embedding_matrix = None  # 设词向量矩阵为None
 train_percent = 0.8     # 训练数据的比例
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mode", type=int, help="the base")
-    args = parser.parse_args()
-    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(args.mode, train_percent)
+#    parser = argparse.ArgumentParser()
+#    parser.add_argument("-m", "--mode", type=int, help="the base")
+#    args = parser.parse_args()
+#    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(args.mode, train_percent)
+    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(1, train_percent)
     model = dnn_model.DNNModel(class_num=class_num, batch_size=batch_size,
                     embed_dim=embed_size, rnn_dims=lstm_sizes,
                     vocab_size=config.max_words, embed_matrix=embedding_matrix,
