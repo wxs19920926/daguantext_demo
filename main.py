@@ -7,6 +7,7 @@ Created on Wed Jan  2 14:21:15 2019
 from project.train import dataset
 from project.model import dnn_model
 from project import config
+import pickle
 #import argparse
 
 # ================== step0: 定义超参数 =================
@@ -33,10 +34,32 @@ if __name__ == '__main__':
 #    parser.add_argument("-m", "--mode", type=int, help="the base")
 #    args = parser.parse_args()
 #    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(args.mode, train_percent)
-    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(1, train_percent)
-    model = dnn_model.DNNModel(class_num=class_num, batch_size=batch_size,
+    f_emb = open('./project/word2vec/word_seg_vectors_arr.pkl', 'rb')
+    emb_arr = pickle.load(f_emb)
+    f_emb.close()
+    f_train = open('./project/data/pro/df_train.pkl', 'rb')
+    f_vali = open('./project/data/pro/df_vali.pkl', 'rb')
+    df_train = pickle.load(f_train)
+    df_vali = pickle.load(f_vali)
+    f_train.close()
+    f_vali.close()
+    """shuffle数据，并to_list"""
+    df_train = df_train.sample(frac=1)
+    train_x = list(df_train.loc[:, 'word_seg'])
+    train_y = list(df_train.loc[:, 'class'])
+    
+    """shuffle数据，并to_list"""
+    df_train = df_vali.sample(frac=1)
+    val_x = list(df_vali.loc[:, 'word_seg'])
+    val_y = list(df_vali.loc[:, 'class'])
+    
+    train_x = dataset.dataset_padding(train_x, 2000)
+    val_x = dataset.dataset_padding(val_x, 2000)
+    
+#    train_x, train_y, val_x, val_y, test_x, test_y, class_num = dataset.main(1, train_percent)
+    model = dnn_model.DNNModel(class_num=20, batch_size=batch_size,
                     embed_dim=embed_size, rnn_dims=lstm_sizes,
-                    vocab_size=config.max_words, embed_matrix=embedding_matrix,
+                    vocab_size=config.max_words, embed_matrix=emb_arr,
                     l2reg=l2reg, refine=refine)
     
     model.build()

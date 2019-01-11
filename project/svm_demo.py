@@ -63,19 +63,25 @@ y_train = y_train['class']-1 #训练集的类别标签（减1方便计算）
 # @知识点定位：传统监督学习算法之线性逻辑回归模型
 #==========================================================
 
-classifier = LinearSVC()  # 实例化逻辑回归模型
-classifier.fit(x_train, y_train)  # 模型训练，传入训练集及其标签
+#classifier = LinearSVC()  # 实例化逻辑回归模型
+#classifier.fit(x_train, y_train)  # 模型训练，传入训练集及其标签
+#
+##根据上面训练好的分类器对测试集的每个样本进行预测
+#y_test_pred = classifier.predict(x_test)
+#
+##评估分数
+#accuracy = accuracy_score(y_true=y_test-1, y_pred=y_test_pred)
+#print(accuracy)
 
-#根据上面训练好的分类器对测试集的每个样本进行预测
-y_test_pred = classifier.predict(x_test)
+import sklearn.neural_network as sk_nn
+model = sk_nn.MLPClassifier(activation='tanh',solver='adam',alpha=0.0001,learning_rate='adaptive',learning_rate_init=0.001,max_iter=200)
+model.fit(x_train,y_train)
+acc=model.score(x_test,y_test-1) #根据给定数据与标签返回正确率的均值
+print('神经网络模型评价:',acc)
 
-#评估分数
-accuracy = accuracy_score(y_true=y_test-1, y_pred=y_test_pred)
-print(accuracy)
 
-
-fp = open('./data/origin/data_tfidf.pkl', 'wb')
-pickle.dump(classifier, fp)
+#fp = open('./data/origin/data_tfidf.pkl', 'wb')
+#pickle.dump(classifier, fp)
 
 #f3 = open('./data_tfidf.pkl', 'rb')
 #classifier = pickle.load(f3)
